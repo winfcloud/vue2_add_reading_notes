@@ -212,6 +212,7 @@ export function parse(template: string, options: CompilerOptions): ASTElement {
     }
   }
 
+  // 核心代码：解析HTML
   parseHTML(template, {
     warn,
     expectHTML: options.expectHTML,
@@ -221,6 +222,7 @@ export function parse(template: string, options: CompilerOptions): ASTElement {
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     outputSourceRange: options.outputSourceRange,
+    // 遇到开始标签 执行start
     start(tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one
@@ -233,6 +235,7 @@ export function parse(template: string, options: CompilerOptions): ASTElement {
         attrs = guardIESVGBug(attrs)
       }
 
+      // 遇到开始标签，就创建一个ast对象
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -280,6 +283,7 @@ export function parse(template: string, options: CompilerOptions): ASTElement {
         element = preTransforms[i](element, options) || element
       }
 
+      // 关键指令解析
       if (!inVPre) {
         processPre(element)
         if (element.pre) {
@@ -313,6 +317,7 @@ export function parse(template: string, options: CompilerOptions): ASTElement {
       }
     },
 
+    // 遇到结束标签 执行end
     end(tag, start, end) {
       const element = stack[stack.length - 1]
       // pop stack
@@ -790,6 +795,7 @@ function processAttrs(el) {
       }
       if (bindRE.test(name)) {
         // v-bind
+        // 获取v-bind后面的参数字符串
         name = name.replace(bindRE, '')
         value = parseFilters(value)
         isDynamic = dynamicArgRE.test(name)

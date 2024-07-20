@@ -50,20 +50,27 @@ export function proxy(target: Object, sourceKey: string, key: string) {
 }
 
 export function initState(vm: Component) {
+  // 用于存储该 组件实例的 watcher 对象。
   const opts = vm.$options
+  // 选项有 props 初始化 props
   if (opts.props) initProps(vm, opts.props)
 
   // Composition API
   initSetup(vm)
 
+  // 选项有 methods 初始化 methosd
   if (opts.methods) initMethods(vm, opts.methods)
+  // 数据响应式 如果 data 存在，进行初始化
   if (opts.data) {
     initData(vm)
   } else {
+    // 否则观测一个空对象
     const ob = observe((vm._data = {}))
     ob && ob.vmCount++
   }
+  // 判读 computed 是否存在， 初始化 computed
   if (opts.computed) initComputed(vm, opts.computed)
+  // 判断 watch 是否存在，并且避免通过原型链访问到浏览器的watch，初始化 watch
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
@@ -75,6 +82,7 @@ function initProps(vm: Component, propsOptions: Object) {
   // cache prop keys so that future props updates can iterate using Array
   // instead of dynamic object key enumeration.
   const keys: string[] = (vm.$options._propKeys = [])
+  // 根组件不存在 $parent
   const isRoot = !vm.$parent
   // root instance props should be converted
   if (!isRoot) {
@@ -82,10 +90,17 @@ function initProps(vm: Component, propsOptions: Object) {
   }
   for (const key in propsOptions) {
     keys.push(key)
+    /**
+     * key：prop 的名字
+     * propsOptions：整个 props 选项对象
+     * propsData：整个 props 数据来源对象
+     * vm：组件实例对象
+     */
     const value = validateProp(key, propsOptions, propsData, vm)
     /* istanbul ignore else */
     if (__DEV__) {
       const hyphenatedKey = hyphenate(key)
+      // 警告你不能使用保留的属性(attribute)名作为 prop 的名字
       if (
         isReservedAttribute(hyphenatedKey) ||
         config.isReservedAttr(hyphenatedKey)
@@ -127,7 +142,10 @@ function initProps(vm: Component, propsOptions: Object) {
 
 function initData(vm: Component) {
   let data: any = vm.$options.data
+  // 判断data类型， 如果是函数，调用 getData
   data = vm._data = isFunction(data) ? getData(data, vm) : data || {}
+  // 处理之后 data已经是一个最终数据对象不再是函数
+  // 判断data是否是一个纯对象
   if (!isPlainObject(data)) {
     data = {}
     __DEV__ &&
@@ -144,11 +162,13 @@ function initData(vm: Component) {
   let i = keys.length
   while (i--) {
     const key = keys[i]
+    // 判断 data和 methods 是否 key 相同，提示冲突
     if (__DEV__) {
       if (methods && hasOwn(methods, key)) {
         warn(`Method "${key}" has already been defined as a data property.`, vm)
       }
     }
+    // 判断 data 和 props 是否 key 相同，提示冲突
     if (props && hasOwn(props, key)) {
       __DEV__ &&
         warn(
@@ -157,15 +177,19 @@ function initData(vm: Component) {
           vm
         )
     } else if (!isReserved(key)) {
+      // 判断是否 键名以 $ 或 _ 开头的字段
+      // 在 Vue 实例对象上添加代理访问数据对象的同名属性
       proxy(vm, `_data`, key)
     }
   }
   // observe data
+  // 开启响应式
   const ob = observe(data)
   ob && ob.vmCount++
 }
 
 export function getData(data: Function, vm: Component): any {
+  // 通过调用 data 选项从而获取数据对象
   // #7573 disable dep collection when invoking data getters
   pushTarget()
   try {
@@ -188,6 +212,7 @@ function initComputed(vm: Component, computed: Object) {
 
   for (const key in computed) {
     const userDef = computed[key]
+    // getter总会是一个函数，不管computed 是函数写法还是，对象写法
     const getter = isFunction(userDef) ? userDef : userDef.get
     if (__DEV__ && getter == null) {
       warn(`Getter is missing for computed property "${key}".`, vm)
@@ -206,6 +231,7 @@ function initComputed(vm: Component, computed: Object) {
     // component-defined computed properties are already defined on the
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
+    // 判断是否有 同名 data props
     if (!(key in vm)) {
       defineComputed(vm, key, userDef)
     } else if (__DEV__) {
@@ -228,6 +254,7 @@ export function defineComputed(
   key: string,
   userDef: Record<string, any> | (() => any)
 ) {
+  // 非服务端才会有缓存值
   const shouldCache = !isServerRendering()
   if (isFunction(userDef)) {
     sharedPropertyDefinition.get = shouldCache
@@ -328,6 +355,7 @@ function createWatcher(
   handler: any,
   options?: Object
 ) {
+  // 判断是否纯对象
   if (isPlainObject(handler)) {
     options = handler
     handler = handler.handler
@@ -369,11 +397,12 @@ export function stateMixin(Vue: typeof Component) {
   Vue.prototype.$delete = del
 
   Vue.prototype.$watch = function (
-    expOrFn: string | (() => any),
-    cb: any,
-    options?: Record<string, any>
+    expOrFn: string | (() => any), // 要观察的属性
+    cb: any, // 回调函数
+    options?: Record<string, any> // 配置项
   ): Function {
     const vm: Component = this
+    // 判断回调是否纯对象
     if (isPlainObject(cb)) {
       return createWatcher(vm, expOrFn, cb, options)
     }

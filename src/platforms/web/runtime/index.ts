@@ -30,14 +30,20 @@ extend(Vue.options.directives, platformDirectives)
 extend(Vue.options.components, platformComponents)
 
 // install platform patch function
+// 1. 设置了一个 patch 函数
+// init 传入的虚拟dom转换成真实dom;
+// update: vdom diff
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method
+// 2.实现了$mount
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
 ): Component {
+  // 判断是否传递el，并且是否是浏览器环境，query是返回指定元素
   el = el && inBrowser ? query(el) : undefined
+  // 初始化，把首次渲染结果替换el
   return mountComponent(this, el, hydrating)
 }
 

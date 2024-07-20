@@ -33,6 +33,7 @@ export function getComponentName(options: ComponentOptions) {
 }
 
 // inline hooks to be invoked on component VNodes during patch
+// 默认的组件管理钩子 虚拟dom钩子
 const componentVNodeHooks = {
   init(vnode: VNodeWithData, hydrating: boolean): boolean | void {
     if (
@@ -40,14 +41,17 @@ const componentVNodeHooks = {
       !vnode.componentInstance._isDestroyed &&
       vnode.data.keepAlive
     ) {
+      // 缓存逻辑
       // kept-alive components, treat as a patch
       const mountedNode: any = vnode // work around flow
       componentVNodeHooks.prepatch(mountedNode, mountedNode)
     } else {
+      // 创建组件实例
       const child = (vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
         activeInstance
       ))
+      // 创建完成并挂载
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
@@ -98,6 +102,7 @@ const componentVNodeHooks = {
 
 const hooksToMerge = Object.keys(componentVNodeHooks)
 
+// 创建自定义组件Vnode的地方
 export function createComponent(
   Ctor: typeof Component | Function | ComponentOptions | void,
   data: VNodeData | undefined,
@@ -139,6 +144,7 @@ export function createComponent(
     }
   }
 
+  // 处理传递的数据
   data = data || {}
 
   // resolve constructor options in case global mixins are applied after
@@ -187,12 +193,15 @@ export function createComponent(
     }
   }
 
+  // 安装自定义组件管理钩子，比如初始化钩子init等
   // install component management hooks onto the placeholder node
   installComponentHooks(data)
 
+  // 定义组件名称
   // return a placeholder vnode
   // @ts-expect-error
   const name = getComponentName(Ctor.options) || tag
+  // 创建虚拟dom
   const vnode = new VNode(
     // @ts-expect-error
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
@@ -229,6 +238,8 @@ export function createComponentInstanceForVnode(
   return new vnode.componentOptions.Ctor(options)
 }
 
+// 安装组件
+// 合并操作：用户也可能传递钩子，所以会整合
 function installComponentHooks(data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {

@@ -95,6 +95,7 @@ function flushSchedulerQueue() {
     }
     id = watcher.id
     has[id] = null
+    // 真正的更新函数
     watcher.run()
     // in dev build, check and stop circular updates.
     if (__DEV__ && has[id] != null) {
@@ -166,6 +167,7 @@ function callActivatedHooks(queue) {
  */
 export function queueWatcher(watcher: Watcher) {
   const id = watcher.id
+  // 去重,不存在才入队
   if (has[id] != null) {
     return
   }
@@ -175,6 +177,7 @@ export function queueWatcher(watcher: Watcher) {
   }
 
   has[id] = true
+  // flushing 判断队列是否正在更新
   if (!flushing) {
     queue.push(watcher)
   } else {
@@ -194,6 +197,7 @@ export function queueWatcher(watcher: Watcher) {
       flushSchedulerQueue()
       return
     }
+    // 异步刷新队列
     nextTick(flushSchedulerQueue)
   }
 }

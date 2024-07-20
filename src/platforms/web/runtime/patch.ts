@@ -7,4 +7,5 @@ import platformModules from 'web/runtime/modules/index'
 // built-in modules have been applied.
 const modules = platformModules.concat(baseModules)
 
+// 传递平台特有的节点操作选项给工厂函数，返回patch
 export const patch: Function = createPatchFunction({ nodeOps, modules })

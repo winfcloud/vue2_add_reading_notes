@@ -65,11 +65,11 @@ export default class Watcher implements DepTarget {
   onTrigger?: ((event: DebuggerEvent) => void) | undefined
 
   constructor(
-    vm: Component | null,
-    expOrFn: string | (() => any),
-    cb: Function,
-    options?: WatcherOptions | null,
-    isRenderWatcher?: boolean
+    vm: Component | null, // 组件实例对象
+    expOrFn: string | (() => any), // 要观察的表达式
+    cb: Function, // 被观察表达式变化时的回调函数
+    options?: WatcherOptions | null, // 传递给观察者对象的选项
+    isRenderWatcher?: boolean // 标识，是否是渲染函数的观察者
   ) {
     recordEffectScope(
       this,
@@ -81,15 +81,22 @@ export default class Watcher implements DepTarget {
         ? vm._scope
         : undefined
     )
+    // 观察者实例对象赋值 to 组件实例对象
+    // 判断是是否为渲染函数观察者
     if ((this.vm = vm) && isRenderWatcher) {
+      // 观察者实例 赋值给 vm._watcher
       vm._watcher = this
     }
     // options
     if (options) {
+      // 当前观察者实例对象 是否深度观测 平时的watch 可以使用deep
       this.deep = !!options.deep
+      // 标识是开发者定义的，还是内部定义的
       this.user = !!options.user
       this.lazy = !!options.lazy
+      // 当数据变化是是否同步求值，并执行回调
       this.sync = !!options.sync
+      // Watcher的实例钩子，数据变化后，触发更新之前，调用调用在创建渲染函数的观察者实例对象时传递的 before 选项
       this.before = options.before
       if (__DEV__) {
         this.onTrack = options.onTrack
@@ -99,10 +106,12 @@ export default class Watcher implements DepTarget {
       this.deep = this.user = this.lazy = this.sync = false
     }
     this.cb = cb
-    this.id = ++uid // uid for batching
-    this.active = true
+    this.id = ++uid // uid for batching 观察者实例对象唯一标识
+    this.active = true // 标识观察者实例对象是否激活
     this.post = false
     this.dirty = this.lazy // for lazy watchers
+    // 以下四个数组用于避免收集重复依赖
+    // 移除无用依赖的功能也靠他们
     this.deps = []
     this.newDeps = []
     this.depIds = new Set()
@@ -110,9 +119,12 @@ export default class Watcher implements DepTarget {
     this.expression = __DEV__ ? expOrFn.toString() : ''
     // parse expression for getter
     if (isFunction(expOrFn)) {
+      // 如果是函数，直接给getter
       this.getter = expOrFn
     } else {
+      // 如果不是，传给parsePath，把这个函数的返回值作为 getter 的值
       this.getter = parsePath(expOrFn)
+      // getter 必然是一个函数，否则解析失败了，提示报错
       if (!this.getter) {
         this.getter = noop
         __DEV__ &&
@@ -135,6 +147,7 @@ export default class Watcher implements DepTarget {
     let value
     const vm = this.vm
     try {
+      // 被观察目标求值
       value = this.getter.call(vm, vm)
     } catch (e: any) {
       if (this.user) {
@@ -158,11 +171,16 @@ export default class Watcher implements DepTarget {
    * Add a dependency to this directive.
    */
   addDep(dep: Dep) {
+    // Dep 实例对象的唯一 id
     const id = dep.id
+    // 避免收集重复依赖
+    // watcher 要知道那些 dep 和它有关
     if (!this.newDepIds.has(id)) {
       this.newDepIds.add(id)
       this.newDeps.push(dep)
+      // depIds 多次求值避免重复依赖
       if (!this.depIds.has(id)) {
+        // 反过来 dep 要知道哪些 watcher 和它有关
         dep.addSub(this)
       }
     }
@@ -174,6 +192,7 @@ export default class Watcher implements DepTarget {
   cleanupDeps() {
     let i = this.deps.length
     while (i--) {
+      // 判断 Dep 和被观察者是否有关系，没有则移除
       const dep = this.deps[i]
       if (!this.newDepIds.has(dep.id)) {
         dep.removeSub(this)
@@ -200,6 +219,7 @@ export default class Watcher implements DepTarget {
     } else if (this.sync) {
       this.run()
     } else {
+      // watcher 入队操作
       queueWatcher(this)
     }
   }
@@ -210,7 +230,9 @@ export default class Watcher implements DepTarget {
    */
   run() {
     if (this.active) {
+      // 重新求值
       const value = this.get()
+      // 给非渲染函数类观察者准备的
       if (
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even

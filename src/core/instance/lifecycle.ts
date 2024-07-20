@@ -22,6 +22,7 @@ import { getCurrentScope } from 'v3/reactivity/effectScope'
 import { syncSetupProxy } from 'v3/apiSetup'
 
 export let activeInstance: any = null
+// 定义 isUpdatingChildComponent，并初始化为 false
 export let isUpdatingChildComponent: boolean = false
 
 export function setActiveInstance(vm: Component) {
@@ -33,18 +34,26 @@ export function setActiveInstance(vm: Component) {
 }
 
 export function initLifecycle(vm: Component) {
+  // 定义 options，它是 vm.$options 的引用，后面的代码使用的都是 options 常量
   const options = vm.$options
 
-  // locate first non-abstract parent
+  // locate first non-abstract parent (查找第一个非抽象的父组件)
+  // 定义 parent，它引用当前实例的父实例
   let parent = options.parent
+  // 如果当前实例有父组件，且当前实例不是抽象的
   if (parent && !options.abstract) {
+    // 使用 while 循环查找第一个非抽象的父组件
     while (parent.$options.abstract && parent.$parent) {
       parent = parent.$parent
     }
+    // 经过上面的 while 循环后，parent 应该是一个非抽象的组件，将它作为当前实例的父级
+    // 所以将当前实例 vm 添加到父级的 $children 属性里
     parent.$children.push(vm)
   }
 
+  // 设置当前实例的 $parent 属性，指向父级
   vm.$parent = parent
+  // 设置 $root 属性，有父级就是用父级的 $root，否则 $root 指向自身
   vm.$root = parent ? parent.$root : vm
 
   vm.$children = []
@@ -68,10 +77,12 @@ export function lifecycleMixin(Vue: typeof Component) {
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
+    // 如果没有 vnode 说明是首次挂载
     if (!prevVnode) {
       // initial render
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
+      // 更新渲染，diff开始
       // updates
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
@@ -149,8 +160,11 @@ export function mountComponent(
   el: Element | null | undefined,
   hydrating?: boolean
 ): Component {
+  // $el 的值是组件模板根元素的引用
   vm.$el = el
+  // 渲染函数如果不存在进入
   if (!vm.$options.render) {
+    // 渲染一个空的 vnode
     // @ts-expect-error invalid type
     vm.$options.render = createEmptyVNode
     if (__DEV__) {
@@ -174,11 +188,14 @@ export function mountComponent(
       }
     }
   }
+  // 触发生命周期函数
   callHook(vm, 'beforeMount')
 
+  // 1. 声明了一个组件更新函数 定义并初始化 updateComponent 函数
   let updateComponent
   /* istanbul ignore if */
   if (__DEV__ && config.performance && mark) {
+    // 满足条件，做一些性能统计
     updateComponent = () => {
       const name = vm._name
       const id = vm._uid
@@ -196,6 +213,7 @@ export function mountComponent(
       measure(`vue ${name} patch`, startTag, endTag)
     }
   } else {
+    //  用户$mount()时，定义updateComponent
     updateComponent = () => {
       vm._update(vm._render(), hydrating)
     }
@@ -214,6 +232,7 @@ export function mountComponent(
     watcherOptions.onTrigger = e => callHook(vm, 'renderTriggered', [e])
   }
 
+  // 2. 创建一个组件相关渲染级别的 watcher 实例
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
@@ -399,6 +418,7 @@ export function callHook(
 ) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()
+  // 生命周期钩子会是一个数组
   const prevInst = currentInstance
   const prevScope = getCurrentScope()
   setContext && setCurrentInstance(vm)

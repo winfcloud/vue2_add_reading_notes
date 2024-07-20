@@ -16,6 +16,7 @@ export function traverse(val: any) {
   return val
 }
 
+// 被观测的值和一个set实例
 function _traverse(val: any, seen: SimpleSet) {
   let i, keys
   const isA = isArray(val)
@@ -27,6 +28,7 @@ function _traverse(val: any, seen: SimpleSet) {
   ) {
     return
   }
+  // 此处解决循环引用和死循环问题
   if (val.__ob__) {
     const depId = val.__ob__.dep.id
     if (seen.has(depId)) {

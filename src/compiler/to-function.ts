@@ -26,10 +26,14 @@ export function createCompileToFunctionFn(compile: Function): Function {
     options?: CompilerOptions,
     vm?: Component
   ): CompiledFunctionResult {
+    // 使用 extend 函数将 options 的属性混合到新的对象中并重新赋值 options
     options = extend({}, options)
+    // 检查选项参数中是否包含 warn，如果没有则使用 baseWarn
     const warn = options.warn || baseWarn
+    // 将 options.warn 属性删除
     delete options.warn
 
+    // 用于检测 new Function() 是否可用
     /* istanbul ignore if */
     if (__DEV__) {
       // detect possible CSP restriction
@@ -59,6 +63,7 @@ export function createCompileToFunctionFn(compile: Function): Function {
     // compile
     const compiled = compile(template, options)
 
+    // 检测模板编译 是否存在 错误和体是信息
     // check compilation errors/tips
     if (__DEV__) {
       if (compiled.errors && compiled.errors.length) {

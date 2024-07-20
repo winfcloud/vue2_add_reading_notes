@@ -32,12 +32,17 @@ export function initRender(vm: Component) {
         vm.$slots
       )
     : emptyObject
+
+  // 给编译器生成渲染函数使用的内部使用
   // bind the createElement fn to this instance
   // so that we get proper render context inside it.
   // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
   // @ts-expect-error
   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
+
+  // render(h) h就是 $createElement
+  // 用户render使用
   // normalization is always applied for the public version, used in
   // user-written render functions.
   // @ts-expect-error
@@ -126,6 +131,7 @@ export function renderMixin(Vue: typeof Component) {
     try {
       setCurrentInstance(vm)
       currentRenderingInstance = vm
+      // vm.$createElement 就是 h
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e: any) {
       handleError(e, vm, `render`)

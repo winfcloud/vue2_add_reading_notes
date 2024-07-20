@@ -14,12 +14,16 @@ import { EffectScope } from 'v3/reactivity/effectScope'
 let uid = 0
 
 export function initMixin(Vue: typeof Component) {
+  // Vue 原型上添加 _init方法
   Vue.prototype._init = function (options?: Record<string, any>) {
     const vm: Component = this
     // a uid
     vm._uid = uid++
 
     let startTag, endTag
+
+    // 在非生产环境下，并且 config.performance 和 mark 都为真，那么才执行里面的代码
+    // 开启性能追踪
     /* istanbul ignore if */
     if (__DEV__ && config.performance && mark) {
       startTag = `vue-perf-start:${vm._uid}`
@@ -29,6 +33,7 @@ export function initMixin(Vue: typeof Component) {
 
     // a flag to mark this as a Vue instance without having to do instanceof
     // check
+    // 标记为Vue实例，避免响应系统观测
     vm._isVue = true
     // avoid instances from being observed
     vm.__v_skip = true
@@ -38,6 +43,8 @@ export function initMixin(Vue: typeof Component) {
     // render of a parent component
     vm._scope.parent = undefined
     vm._scope._vm = true
+
+    // 1. 合并选项 用户和系统的 option合并一下
     // merge options
     if (options && options._isComponent) {
       // optimize internal component instantiation
@@ -45,6 +52,7 @@ export function initMixin(Vue: typeof Component) {
       // internal component options needs special treatment.
       initInternalComponent(vm, options as any)
     } else {
+      // 传入三个参数，构造函数的options，初始化的options，实例本身
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor as any),
         options || {},
@@ -57,15 +65,17 @@ export function initMixin(Vue: typeof Component) {
     } else {
       vm._renderProxy = vm
     }
+
+    // 初始化过程
     // expose real self
     vm._self = vm
-    initLifecycle(vm)
-    initEvents(vm)
-    initRender(vm)
-    callHook(vm, 'beforeCreate', undefined, false /* setContext */)
-    initInjections(vm) // resolve injections before data/props
-    initState(vm)
-    initProvide(vm) // resolve provide after data/props
+    initLifecycle(vm) // $parent,$root,$children,$refs
+    initEvents(vm) // 添加监听 父组件传入的事件和回调
+    initRender(vm) // 申明 $slots,$createElement()
+    callHook(vm, 'beforeCreate', undefined, false /* setContext */) // 调用生命周期函数
+    initInjections(vm) // resolve injections before data/props // 注入数据
+    initState(vm) // 重要，数据初始化，响应式 props methods data...
+    initProvide(vm) // resolve provide after data/props // 提供数据
     callHook(vm, 'created')
 
     /* istanbul ignore if */
@@ -75,6 +85,7 @@ export function initMixin(Vue: typeof Component) {
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
 
+    // 如果设置了 el 选项 , 自动执行 $mount
     if (vm.$options.el) {
       vm.$mount(vm.$options.el)
     }
@@ -103,6 +114,7 @@ export function initInternalComponent(
   }
 }
 
+// 解析构造函数的options
 export function resolveConstructorOptions(Ctor: typeof Component) {
   let options = Ctor.options
   if (Ctor.super) {

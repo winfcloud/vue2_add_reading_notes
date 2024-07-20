@@ -74,6 +74,7 @@ const patternTypes: Array<Function> = [String, RegExp, Array]
 // TODO defineComponent
 export default {
   name: 'keep-alive',
+  // 标记为抽象组件
   abstract: true,
 
   props: {

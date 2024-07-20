@@ -69,20 +69,25 @@ export interface HTMLParserOptions extends CompilerOptions {
 }
 
 export function parseHTML(html, options: HTMLParserOptions) {
-  const stack: any[] = []
+  // 定义一些常量和变量
+  const stack: any[] = [] //判断标签开闭和的栈
   const expectHTML = options.expectHTML
   const isUnaryTag = options.isUnaryTag || no
   const canBeLeftOpenTag = options.canBeLeftOpenTag || no
   let index = 0
   let last, lastTag
+  // 开启一个 while 循环，循环结束的条件是 html 为空，即 html 被 parse 完毕
   while (html) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
     if (!lastTag || !isPlainTextElement(lastTag)) {
+      // 确保即将 parse 的内容不是在纯文本标签里 (script,style,textarea)
       let textEnd = html.indexOf('<')
+      // textEnd === 0 时，说明 html 字符串的第一个字符就是左尖括号
       if (textEnd === 0) {
         // Comment:
         if (comment.test(html)) {
+          // 可能是注释节点
           const commentEnd = html.indexOf('-->')
 
           if (commentEnd >= 0) {
@@ -100,6 +105,7 @@ export function parseHTML(html, options: HTMLParserOptions) {
 
         // https://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
         if (conditionalComment.test(html)) {
+          // 可能是条件注释节点
           const conditionalEnd = html.indexOf(']>')
 
           if (conditionalEnd >= 0) {
@@ -165,6 +171,7 @@ export function parseHTML(html, options: HTMLParserOptions) {
         options.chars(text, index - text.length, index)
       }
     } else {
+      // 即将 parse 的内容是在纯文本标签里 (script,style,textarea)
       let endTagLength = 0
       const stackedTag = lastTag.toLowerCase()
       const reStackedTag =
@@ -193,6 +200,7 @@ export function parseHTML(html, options: HTMLParserOptions) {
       parseEndTag(stackedTag, index - endTagLength, index)
     }
 
+    // 将整个字符串作为文本对待
     if (html === last) {
       options.chars && options.chars(html)
       if (__DEV__ && !stack.length && options.warn) {
@@ -204,14 +212,17 @@ export function parseHTML(html, options: HTMLParserOptions) {
     }
   }
 
+  // 调用 parseEndTag 函数
   // Clean up any remaining tags
   parseEndTag()
 
+  // advance 函数
   function advance(n) {
     index += n
     html = html.substring(n)
   }
 
+  // parseStartTag 函数用来 parse 开始标签
   function parseStartTag() {
     const start = html.match(startTagOpen)
     if (start) {
@@ -240,6 +251,7 @@ export function parseHTML(html, options: HTMLParserOptions) {
     }
   }
 
+  // handleStartTag 函数用来处理 parseStartTag 的结果
   function handleStartTag(match) {
     const tagName = match.tagName
     const unarySlash = match.unarySlash
@@ -290,6 +302,7 @@ export function parseHTML(html, options: HTMLParserOptions) {
     }
   }
 
+  // parseEndTag 函数用来 parse 结束标签
   function parseEndTag(tagName?: any, start?: any, end?: any) {
     let pos, lowerCasedTagName
     if (start == null) start = index

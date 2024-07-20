@@ -4,7 +4,9 @@ import { detectErrors } from './error-detector'
 import { createCompileToFunctionFn } from './to-function'
 
 export function createCompilerCreator(baseCompile: Function): Function {
+  // createCompiler 函数作为 createCompilerCreator 函数的返回值
   return function createCompiler(baseOptions: CompilerOptions) {
+    // 定义 compile 函数
     function compile(
       template: string,
       options?: CompilerOptions
@@ -43,6 +45,7 @@ export function createCompilerCreator(baseCompile: Function): Function {
             ;(tip ? tips : errors).push(data)
           }
         }
+        // 开始生成最终编译选项 finalOptions
         // merge custom modules
         if (options.modules) {
           finalOptions.modules = (baseOptions.modules || []).concat(
@@ -66,6 +69,7 @@ export function createCompilerCreator(baseCompile: Function): Function {
 
       finalOptions.warn = warn
 
+      // 调用 baseCompile 编译模板
       const compiled = baseCompile(template.trim(), finalOptions)
       if (__DEV__) {
         detectErrors(compiled.ast, warn)
@@ -75,6 +79,7 @@ export function createCompilerCreator(baseCompile: Function): Function {
       return compiled
     }
 
+    // 返回 compile 和 compileToFunctions
     return {
       compile,
       compileToFunctions: createCompileToFunctionFn(compile)

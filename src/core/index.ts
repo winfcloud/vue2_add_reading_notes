@@ -4,12 +4,15 @@ import { isServerRendering } from 'core/util/env'
 import { FunctionalRenderContext } from 'core/vdom/create-functional-component'
 import { version } from 'v3'
 
+// 1.定义全局api: set/delet/use....
 initGlobalAPI(Vue)
 
+// 在 Vue.prototype 上添加 $isServer 属性
 Object.defineProperty(Vue.prototype, '$isServer', {
   get: isServerRendering
 })
 
+// 在 Vue.prototype 上添加 $ssrContext 属性
 Object.defineProperty(Vue.prototype, '$ssrContext', {
   get() {
     /* istanbul ignore next */

@@ -15,18 +15,23 @@ export function initAssetRegisters(Vue: GlobalAPI) {
       if (!definition) {
         return this.options[type + 's'][id]
       } else {
+        // 如同 Vue.component('comp',{})
         /* istanbul ignore if */
         if (__DEV__ && type === 'component') {
           validateComponentName(id)
         }
         if (type === 'component' && isPlainObject(definition)) {
+          // 定义组件name
           // @ts-expect-error
           definition.name = definition.name || id
+          // extend创建组件构造函数，def变成了构造函数
           definition = this.options._base.extend(definition)
         }
         if (type === 'directive' && isFunction(definition)) {
           definition = { bind: definition, update: definition }
         }
+        // 初始化的时候，合并 options 的时候就有这个 definition
+        // 注册 this,.options[components][comp] = Ctor
         this.options[type + 's'][id] = definition
         return definition
       }

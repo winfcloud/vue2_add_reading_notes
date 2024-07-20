@@ -31,9 +31,11 @@ export function def(obj: Object, key: string, val: any, enumerable?: boolean) {
  */
 const bailRE = new RegExp(`[^${unicodeRegExp.source}.$_\\d]`)
 export function parsePath(path: string): any {
+  // 如果 path 满足正则
   if (bailRE.test(path)) {
     return
   }
+  // . 分割 path 字符串产生的数组
   const segments = path.split('.')
   return function (obj) {
     for (let i = 0; i < segments.length; i++) {

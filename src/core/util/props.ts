@@ -26,6 +26,7 @@ export function validateProp(
   vm?: Component
 ): any {
   const prop = propOptions[key]
+  // 是否传递数据
   const absent = !hasOwn(propsData, key)
   let value = propsData[key]
   // boolean casting
@@ -109,20 +110,24 @@ function assertProp(
   vm?: Component,
   absent?: boolean
 ) {
+  // 判断必传值 props 是否有传值
   if (prop.required && absent) {
     warn('Missing required prop: "' + name + '"', vm)
     return
   }
+  // 传入值是 null 或 undefined ，并且是非必须的
   if (value == null && !prop.required) {
     return
   }
   let type = prop.type
+  // 如果定义的时候没规定类型，则不需要校验
   let valid = !type || (type as any) === true
   const expectedTypes: string[] = []
   if (type) {
     if (!isArray(type)) {
       type = [type]
     }
+    // 只需要满足其中一个类型就会停止
     for (let i = 0; i < type.length && !valid; i++) {
       const assertedType = assertType(value, type[i], vm)
       expectedTypes.push(assertedType.expectedType || '')
@@ -158,6 +163,7 @@ function assertType(
 } {
   let valid
   const expectedType = getType(type)
+  // 可以用 typeof 方法判断的类型
   if (simpleCheckRE.test(expectedType)) {
     const t = typeof value
     valid = t === expectedType.toLowerCase()

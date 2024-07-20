@@ -68,6 +68,7 @@ export default class Dep {
     }
   }
 
+  // 遍历内部所有的依赖(watcher)
   notify(info?: DebuggerEventExtraInfo) {
     // stabilize the subscriber list first
     const subs = this.subs.filter(s => s) as DepTarget[]
@@ -77,6 +78,7 @@ export default class Dep {
       // order
       subs.sort((a, b) => a.id - b.id)
     }
+    // 逐个调用 所有 watcher 对象的 update 方法
     for (let i = 0, l = subs.length; i < l; i++) {
       const sub = subs[i]
       if (__DEV__ && info) {
@@ -97,6 +99,7 @@ export default class Dep {
 Dep.target = null
 const targetStack: Array<DepTarget | null | undefined> = []
 
+// 给 Dep.target 赋值 ， 保存着一个观察者对象(即将要收集的对象)
 export function pushTarget(target?: DepTarget | null) {
   targetStack.push(target)
   Dep.target = target
